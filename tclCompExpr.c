@@ -1385,8 +1385,7 @@ ParseExpr(
 		    errCode = "SURPRISE";
 		    goto error;
 		}
-		printf ("ici");
-	    }
+		}
 
 	    /* Operator ":" may only be right operand of "?" */
 	    if (IsOperator(complete) && (nodes[complete].lexeme == COLON)) {
