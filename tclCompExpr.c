@@ -1385,7 +1385,7 @@ ParseExpr(
 		    errCode = "SURPRISE";
 		    goto error;
 		}
-		}
+	    }
 
 	    /* Operator ":" may only be right operand of "?" */
 	    if (IsOperator(complete) && (nodes[complete].lexeme == COLON)) {
