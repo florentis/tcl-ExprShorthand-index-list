@@ -1,0 +1,9 @@
+1138a1139,1140
+>     Tcl_Size len;
+>     char *bytes;
+1139a1142,1146
+>     bytes = Tcl_GetStringFromObj(elNamePtr, &len);
+>     if (bytes[0] == '(' && bytes[len-1] == ')' ) {
+> 	Tcl_ExprObj(interp, elNamePtr, &elNamePtr);
+> 	bytes = Tcl_GetStringFromObj(elNamePtr, &len);
+>     }

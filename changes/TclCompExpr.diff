@@ -1,0 +1,98 @@
+620a621,631
+>     int nb_paren=0;
+>     int substExpressionContext=0;
+>     Tcl_Size originalLength=numBytes;
+>     
+>     if(start[0] == '[' && start[1] == '(' ) {
+> 	// Expression substitution context
+> 	substExpressionContext=1;
+> 	start++; //skip the open bracket '[', keep the parenthese 
+> 	numBytes--;
+>     }
+> 	
+642c653,659
+<      * Main parsing loop parses one lexeme per iteration. We exit the loop
+---
+>      * create the list function name object
+>      */
+>     Tcl_Obj *listName;
+>     TclNewLiteralStringObj(listName, "list");
+>     
+>     /*
+>     * Main parsing loop parses one lexeme per iteration. We exit the loop
+661,662c678,679
+< 	if (nodesUsed >= nodesAvailable) {
+< 	    size_t size = nodesUsed * 2;
+---
+> 	if (nodesUsed >= nodesAvailable-1) {
+> 	    unsigned int size = nodesUsed * 2;
+946a964
+> 		int nestSubstExprShorthand = 0;
+951c969,973
+< 		tokenPtr->type = TCL_TOKEN_COMMAND;
+---
+> 		if (numBytes > 1 && start[1] == '(') {
+> 		    tokenPtr->type = TCL_TOKEN_SUB_EXPR;
+> 		} else {
+> 			tokenPtr->type = TCL_TOKEN_COMMAND;
+> 		}
+966c988,992
+< 		    start = nestedPtr->commandStart + nestedPtr->commandSize;
+---
+> 			if (nestSubstExprShorthand == 1) {			    
+> 			    start = nestedPtr->commandStart + nestedPtr->commandSize-3;
+> 			} else {
+> 		    	start = nestedPtr->commandStart + nestedPtr->commandSize;
+> 			}
+1057c1083,1100
+< 
+---
+> 	    if (substExpressionContext == 1) {
+> 		if (start[0]== '(') {
+> 		    nb_paren++;    
+> 		}
+> 	    }
+> 	    
+> 	    if (lexeme == OPEN_PAREN && nodePtr[-1].lexeme != FUNCTION ) {
+> 		nodePtr->lexeme = FUNCTION;
+> 		nodePtr->precedence = prec[FUNCTION];
+> 		nodePtr->mark = MARK_RIGHT;
+> 		nodePtr->constant = 0; 
+> 		nodePtr->p.prev = incomplete;
+> 		incomplete = lastParsed = nodesUsed;
+> 		Tcl_ListObjAppendElement(NULL, funcList, listName); 
+> 		nodesUsed++;
+> 		nodePtr = nodes + nodesUsed;
+> 	    }
+> 	    
+1101a1145,1154
+> 		if (substExpressionContext == 1) {
+> 			if (start[0] == ')') {
+> 		    	nb_paren--;
+> 		        if (numBytes >= 1 && nb_paren == 0 && start[1] ==']') {
+> 					//// End of expr substitution
+> 					parsePtr->commandSize = originalLength - numBytes;
+> 					numBytes=0; // make ParseLexeme add a END node
+> 		    	}					   
+> 			}		
+> 	    }
+1879,1883c1932,1940
+< 
+<     TclParseInit(interp, start, numBytes, parsePtr);
+<     if (code == TCL_OK) {
+< 	ConvertTreeToTokens(start, numBytes,
+< 		opTree, exprParsePtr->tokenPtr, parsePtr);
+---
+> 	if (code == TCL_OK) {
+> 		if(numBytes> 1 && start[0] == '[' && start[1] == '(' ) {
+> 	    	// Expression Substitution Context : transfert the command size to parseToken.
+> 			parsePtr->commandSize = exprParsePtr->commandSize;
+> 		} else {
+>     		TclParseInit(interp, start, numBytes, parsePtr);
+>     		ConvertTreeToTokens(start, numBytes,
+> 				opTree, exprParsePtr->tokenPtr, parsePtr);
+> 		}
+1926c1983
+<     if (numBytes == 0) {
+---
+>     if (numBytes <= 0) {
